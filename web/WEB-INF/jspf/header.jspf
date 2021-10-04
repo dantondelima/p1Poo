@@ -1,0 +1,94 @@
+<%-- any content can be specified here e.g.: --%>
+<%@page import="java.util.Random"%>
+<%@ page pageEncoding="UTF-8" %>
+<h2>Danton de Lima</h2>
+<%!
+    public Boolean verificaNumero(int val, int[] array){
+        for(int i = 0; i < array.length; i++){
+            if(array[i] == val){
+                return true;
+            }
+        }
+        return false;
+    }
+%>
+<%
+   if(application.getAttribute("qtdLogados") == null){
+       application.setAttribute("qtdLogados", 0);
+   }
+   int qtdUsuariosLogados = (int) application.getAttribute("qtdLogados");
+   String usuariosLogados [] = (String[]) application.getAttribute("listaUsuarios");
+   if(request.getParameter("login") != null){
+       //nome usuario logado
+       session.setAttribute("nomeUsuario", request.getParameter("nome"));
+       //quantidade de usuário logados
+       application.setAttribute("qtdLogados", qtdUsuariosLogados + 1);
+       
+       //lista de usuários
+       int tamanho = 0;
+       if(usuariosLogados != null){
+           tamanho = usuariosLogados.length;
+       }
+       String usuarios[] = new String [tamanho + 1];
+       for(int i = 0; i < tamanho;i++){
+           usuarios[i] = usuariosLogados[i];
+       }
+       usuarios[tamanho] = (String) session.getAttribute("nomeUsuario");
+       application.setAttribute("listaUsuarios", usuarios);
+       
+       //números megasena
+       int numerosMega[] = new int[6];
+       for(int i = 0; i < numerosMega.length; i++){
+           Random rnd = new Random();
+           int valor = rnd.nextInt(60) + 1;
+           while(verificaNumero(valor, numerosMega)){
+               valor = rnd.nextInt(60) + 1;
+           }
+           numerosMega[i] = valor;
+       }
+       session.setAttribute("numerosMega", numerosMega);
+       response.sendRedirect(request.getRequestURI());
+   }
+   if(request.getParameter("logout") != null){
+       
+       application.setAttribute("qtdLogados", qtdUsuariosLogados - 1);
+       
+       int tamanho = usuariosLogados.length;
+       String usuarios[] = new String [tamanho - 1];
+       boolean achouIgual = false;
+       for(int i = 0; i < tamanho - 1;i++){
+           if(!achouIgual){
+                if(usuariosLogados[i] != session.getAttribute("nomeUsuario")){
+                    usuarios[i] = usuariosLogados[i];
+                }
+                else{
+                    achouIgual = true;
+                    usuarios[i] = usuariosLogados[i + 1];
+                }
+           }
+           else{
+               usuarios[i] = usuariosLogados[i + 1];
+           }
+       }
+       session.removeAttribute("nomeUsuario");
+       session.removeAttribute("numerosMega");
+       application.setAttribute("listaUsuarios", usuarios);
+       response.sendRedirect(request.getRequestURI());
+   }
+   
+    String nomeUsuario = (String) session.getAttribute("nomeUsuario");
+    int qtdUsuarios = (int) application.getAttribute("qtdLogados");
+    int numerosMega [] = (int[]) session.getAttribute("numerosMega");
+    String listaUsuarios [] = (String[]) application.getAttribute("listaUsuarios");
+%>
+
+<form method="post">
+    <% if(nomeUsuario == null){ %>
+        <input type="text" name="nome" placeholder="Digite seu nome para logar">
+        <input type="submit" name="login" value="logar">
+    <% }else {%>
+        <h3>Bem-vindo, <%= nomeUsuario %></h3>
+        <h3><a href="index.jsp">Página inicial</a> | <a href="danton.jsp">Perfil</a> | <a href="danton-dica-megasena.jsp">Megasena</a></h3>
+        <input type="submit" name="logout" value="Logout">
+    <% }%>
+</form>
